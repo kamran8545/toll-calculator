@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/splash_screen_controller.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/app_icons.dart';
 import '../../utils/constants.dart';
 
 class SplashScreen extends GetView<SplashScreenController> {
@@ -22,7 +23,7 @@ class SplashScreen extends GetView<SplashScreenController> {
               duration: const Duration(milliseconds: 400),
               scale: controller.iconScaleAnimation.value,
               child: Image.asset(
-                'assets/icons/app_icon.png',
+                AppIcons.kAppIconPNG,
                 height: 100.h,
                 width: 100.w,
               ),
