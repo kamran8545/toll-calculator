@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "422148284389",
+    "project_id": "toll-calculator-457ce",
+    "storage_bucket": "toll-calculator-457ce.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422148284389:android:5f99db7b6f842e09b3990c",
+        "android_client_info": {
+          "package_name": "com.example.toll_calculator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8EKYSd4PMWxZM0wRFjO7GKMSIGXC3qNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
