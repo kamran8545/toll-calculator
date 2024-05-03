@@ -5,6 +5,8 @@ class RouteModel {
   String entryPoint = '';
   String endPoint = '';
 
+  RouteModel.empty();
+
   RouteModel({required this.id, required this.numberPlate, required this.dateTime, required this.entryPoint, required this.endPoint});
 
   factory RouteModel.fromJson(Map<String, dynamic> json) {

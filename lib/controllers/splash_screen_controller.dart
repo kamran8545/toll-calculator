@@ -29,9 +29,9 @@ class SplashScreenController extends GetxController {
 
     SessionManagement sessionManagement = Get.find<SessionManagement>();
     if (await sessionManagement.isUserLogin()) {
-      Get.toNamed(RouteNames.kHomeScreenRoute);
+      Get.offNamed(RouteNames.kHomeScreenRoute);
     } else {
-      Get.toNamed(RouteNames.kLoginScreenRoute);
+      Get.offNamed(RouteNames.kLoginScreenRoute);
     }
   }
 

@@ -1,13 +1,16 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:toll_calculator/models/route_model.dart';
 import 'package:toll_calculator/models/user_model.dart';
 import 'package:toll_calculator/services/route_service.dart';
 import 'package:toll_calculator/services/user_service.dart';
+import 'package:toll_calculator/utils/common_code.dart';
 import 'package:toll_calculator/utils/constants.dart';
 import 'package:toll_calculator/utils/extensions/date_extension.dart';
+import 'package:toll_calculator/utils/route_management.dart';
 import 'package:toll_calculator/utils/session_management.dart';
 
 import '../models/interchange_model.dart';
@@ -25,9 +28,13 @@ class HomeScreenController extends GetxController {
   FocusNode dateTimeFC = FocusNode();
 
   Rx<DateTime> routeTime = DateTime.now().obs;
-  RxBool showErrorMessage = false.obs, isSubmitting = false.obs, isEntryPoint = true.obs;
+  RxBool showErrorMessage = false.obs, isSubmitting = false.obs, isEntryPoint = true.obs, showReceipt = false.obs;
 
   RxDouble tabOpacity = 1.0.obs;
+
+  int baseCharges = 20;
+  RxDouble givenDiscount = 0.0.obs, grandTotal = 0.0.obs, subTotal = 0.0.obs;
+  RxString distanceCostBreakDown = ''.obs;
 
   @override
   void onInit() async {
@@ -45,6 +52,7 @@ class HomeScreenController extends GetxController {
   }
 
   void onPlateNumChange(String updatedText) {
+    showReceipt.value = false;
     if (updatedText.isEmpty || updatedText.length < 7) {
       showErrorMessage.value = false;
       return;
@@ -57,15 +65,20 @@ class HomeScreenController extends GetxController {
     tabOpacity.value = 0.0;
     await Future.delayed(const Duration(milliseconds: 400));
     isEntryPoint.value = entryPoint;
+    showReceipt.value = false;
     tabOpacity.value = 1.0;
   }
 
   void onSubmitPressed() async {
+    showReceipt.value = false;
+    if (numPlateFC.hasFocus) {
+      numPlateFC.unfocus();
+    }
     if (showErrorMessage.value || numPlateTEController.text.length < 7) {
       return;
     }
     isSubmitting.value = true;
-    if(isEntryPoint.value){
+    if (isEntryPoint.value) {
       RouteModel routeModel = RouteModel(
         id: '',
         numberPlate: numPlateTEController.text,
@@ -75,59 +88,85 @@ class HomeScreenController extends GetxController {
       );
       await RouteService().addRoute(routeModel: routeModel);
       numPlateTEController.text = '';
-    }else{
+    } else {
       RouteModel oldRouteModel = await RouteService().getRouteByNumPlate(numPlate: numPlateTEController.text);
-      oldRouteModel.endPoint = currentWorkingInterchange.value.interchangeName;
-      calculateCharges(routeModel: oldRouteModel);
+      if(oldRouteModel.numberPlate.isNotEmpty){
+        oldRouteModel.endPoint = currentWorkingInterchange.value.interchangeName;
+        calculateCharges(routeModel: oldRouteModel);
+      }else {
+        CommonCode.showToastMessage(message: 'Entry point for this vehicle not found!');
+      }
     }
     isSubmitting.value = false;
   }
 
-  void calculateCharges({required RouteModel routeModel}){
-    int baseCharges  = 20;
+  void calculateCharges({required RouteModel routeModel}) async {
     double perKMCharges = 0.2;
 
-    double currentCharges = calculateTraveledKM(routeModel: routeModel) * perKMCharges;
-    currentCharges = calculateDiscount(routeModel: routeModel, currentCharges: currentCharges);
-    currentCharges = weekendCharges(routeModel: routeModel, currentCharges: currentCharges);
+    /// Calculate cost as per KM traveled
+    int traveledKM = calculateTraveledKM(routeModel: routeModel);
+    double currentCharges = traveledKM * perKMCharges;
+
+    /// Calculate weekend charges
+    double weekend = weekendCharges(routeModel: routeModel);
+    currentCharges *= weekend;
+
+    distanceCostBreakDown.value = '$traveledKM * ${weekend == 1 ? perKMCharges : weekend} = ${(traveledKM * perKMCharges * weekend).toStringAsFixed(2)}';
+
+    subTotal.value = baseCharges + currentCharges;
+
+    givenDiscount.value = double.parse(calculateDiscount(routeModel: routeModel, currentCharges: currentCharges).toStringAsFixed(2));
+    currentCharges -= givenDiscount.value;
     currentCharges += baseCharges;
+    grandTotal.value = currentCharges;
+    showReceipt.value = true;
+
+    /// Update in the db route has been exited
+    await RouteService().updateRoute(routeModel: routeModel);
   }
 
-  int calculateTraveledKM({required RouteModel routeModel}){
+  int calculateTraveledKM({required RouteModel routeModel}) {
     InterchangeModel entryModel = Constants.interchangeList.where((element) => element.interchangeName == routeModel.entryPoint).toList().first;
     InterchangeModel exitModel = Constants.interchangeList.where((element) => element.interchangeName == routeModel.endPoint).toList().first;
     int totalKMTraveled = exitModel.kiloMeter - entryModel.kiloMeter;
-    if(totalKMTraveled < 0){
+    if (totalKMTraveled < 0) {
       totalKMTraveled = totalKMTraveled * -1;
     }
     return totalKMTraveled;
   }
 
-  double calculateDiscount({required RouteModel routeModel, required double currentCharges}){
+  double calculateDiscount({required RouteModel routeModel, required double currentCharges}) {
     double evenOddDiscount = 0.1; // 10 percent
     double nationalHolidayDiscount = 0.5; // 50 percent
+    double discount = 0.0;
 
     DateTime traveledTime = routeModel.dateTime.parseDate();
-    if(traveledTime.weekday == 1 || traveledTime.weekday == 3 && int.parse(routeModel.numberPlate[6]) % 2 == 0){
+    if (traveledTime.weekday == 1 || traveledTime.weekday == 3 && int.parse(routeModel.numberPlate[6]) % 2 == 0) {
       /// if day is Monday or Wednesday and Vehicle's number plate last digit is even
-      currentCharges = currentCharges - currentCharges * evenOddDiscount;
-    }else if(traveledTime.weekday == 2 || traveledTime.weekday == 4 && int.parse(routeModel.numberPlate[6]) % 2 != 0){
+      discount = currentCharges * evenOddDiscount;
+    } else if (traveledTime.weekday == 2 || traveledTime.weekday == 4 && int.parse(routeModel.numberPlate[6]) % 2 != 0) {
       /// if day is Tuesday or Thursday and Vehicle's number plate last digit is odd
-      currentCharges = currentCharges - currentCharges * evenOddDiscount;
-    }else if((traveledTime.day == 23 && traveledTime.month == 3) || (traveledTime.day == 14 && traveledTime.month == 8) || (traveledTime.day == 25 && traveledTime.month == 12)){
+      discount = currentCharges * evenOddDiscount;
+    } else if ((traveledTime.day == 23 && traveledTime.month == 3) || (traveledTime.day == 14 && traveledTime.month == 8) || (traveledTime.day == 25 && traveledTime.month == 12)) {
       /// holiday discount
-      currentCharges = currentCharges - currentCharges * nationalHolidayDiscount;
+      discount = currentCharges * nationalHolidayDiscount;
     }
-    return currentCharges;
+    return discount;
   }
 
-  double weekendCharges({required RouteModel routeModel, required double currentCharges}){
+  double weekendCharges({required RouteModel routeModel}) {
     double distanceRate = 1.5; // 1.5 times on weekends
 
     DateTime traveledTime = routeModel.dateTime.parseDate();
-    if(traveledTime.weekday == 6 || traveledTime.weekday == 7){
-      currentCharges *= distanceRate;
+    if (traveledTime.weekday == 6 || traveledTime.weekday == 7) {
+      return distanceRate;
     }
-    return currentCharges;
+    return 1;
+  }
+
+  void onLogout(){
+    FirebaseAuth.instance.signOut();
+    sessionManagement.logout();
+    Get.offAllNamed(RouteNames.kLoginScreenRoute);
   }
 }

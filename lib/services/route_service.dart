@@ -22,8 +22,16 @@ class RouteService {
 
   Future<RouteModel> getRouteByNumPlate({required String numPlate}) async {
     QuerySnapshot querySnapshot = await _firebaseFireStore.collection(Constants.kRoutesNode).where('numberPlate', isEqualTo: numPlate).where('endPoint', isEqualTo: '').get();
-    QueryDocumentSnapshot queryDocumentSnapshot = querySnapshot.docs.first;
-    Map<String, dynamic> data = queryDocumentSnapshot.data() as Map<String,dynamic>;
-    return RouteModel.fromJson(data);
+    List<QueryDocumentSnapshot> queryDocumentSnapshot = querySnapshot.docs;
+    if (queryDocumentSnapshot.isNotEmpty) {
+      Map<String, dynamic> data = queryDocumentSnapshot.first.data() as Map<String, dynamic>;
+      return RouteModel.fromJson(data);
+    } else {
+      return RouteModel.empty();
+    }
+  }
+
+  Future updateRoute({required RouteModel routeModel}) async {
+    await FirebaseFirestore.instance.collection(Constants.kRoutesNode).doc(routeModel.id).update({"endPoint": routeModel.endPoint});
   }
 }

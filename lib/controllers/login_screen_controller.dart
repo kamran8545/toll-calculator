@@ -32,7 +32,7 @@ class LoginScreenController extends GetxController {
         SessionManagement sessionManagement = Get.find<SessionManagement>();
         sessionManagement.updateLoginStatus(isLogin: true);
         sessionManagement.updateUserData(userModel: response);
-        Get.toNamed(RouteNames.kHomeScreenRoute);
+        Get.offAllNamed(RouteNames.kHomeScreenRoute);
       } else if (response is String) {
         CommonCode.showToastMessage(message: response);
       }

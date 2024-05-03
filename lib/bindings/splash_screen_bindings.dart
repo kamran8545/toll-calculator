@@ -6,9 +6,6 @@ class SplashScreenBindings extends Bindings {
   @override
   void dependencies() async {
     Get.lazyPut(() => SplashScreenController());
-
-    var session = SessionManagement();
-    await session.initSharedPreferences();
-    Get.lazyPut(() => session);
+    Get.lazyPut(() => SessionManagement());
   }
 }

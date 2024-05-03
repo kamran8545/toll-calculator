@@ -169,15 +169,203 @@ class HomeScreen extends GetView<HomeScreenController> {
                             ),
                           )
                         : Text(
-                            'Submit',
+                            controller.isEntryPoint.value ? 'Submit' : 'Calculate',
                             style: TextStyle(color: AppColors.kWhiteColor, fontSize: 15.sp),
                           ),
                   ),
                 ),
+                SizedBox(
+                  height: 20.h,
+                ),
+                Obx(
+                  () => Visibility(
+                    visible: controller.showReceipt.value,
+                    child: ReceiptWidget(),
+                  ),
+                )
               ],
             ),
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: controller.onLogout,
+        backgroundColor: AppColors.kPrimaryColor,
+        child: const Icon(Icons.logout, color: AppColors.kWhiteColor,),
+      ),
+    );
+  }
+}
+
+class ReceiptWidget extends StatelessWidget {
+  ReceiptWidget({super.key});
+
+  final homeController = Get.find<HomeScreenController>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: AppColors.kPrimaryLightColor,
+        border: Border.all(width: 1.h, color: AppColors.kPrimaryColor),
+        borderRadius: BorderRadius.circular(10.r),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Cost Break Down',
+            style: TextStyle(
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.kTextColor,
+            ),
+          ),
+          Divider(
+            height: 1.h,
+            thickness: 1,
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Base Rate',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 10.w,
+              ),
+              Expanded(
+                child: Text(
+                  homeController.baseCharges.toString(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Distance Cost Breakdown',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 10.w,
+              ),
+              Expanded(
+                child: Text(
+                  homeController.distanceCostBreakDown.value.toString(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Sub-Total',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 10.w,
+              ),
+              Expanded(
+                child: Text(
+                  homeController.subTotal.value.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Discount/Other',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 10.w,
+              ),
+              Expanded(
+                child: Text(
+                  homeController.givenDiscount.value.toString(),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Total To Be Charged',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 10.w,
+              ),
+              Expanded(
+                child: Text(
+                  homeController.grandTotal.value.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.kTextColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
