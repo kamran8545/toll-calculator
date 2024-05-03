@@ -1,4 +1,4 @@
-# toll_calculator
+# Toll Calculator
 
 A new Flutter project.
 
