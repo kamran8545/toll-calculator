@@ -7,6 +7,10 @@ https://github.com/kamran8545/toll-calculator/assets/28790321/a6d2dad1-5370-4d85
 
 
 
+https://github.com/kamran8545/toll-calculator/assets/28790321/97a4dc8a-98aa-4cd0-b39b-ef32c1ca427a
+
+
+
 
 
 
